@@ -97,7 +97,7 @@ public class TodoController implements Controller {
     }
     if (ctx.queryParamMap().containsKey(ROLE_KEY)) {
       String role = ctx.queryParamAsClass(ROLE_KEY, String.class)
-        .check(it -> it.matches(ROLE_REGEX), "Todo myst have legal todo role")
+        .check(it -> it.matches(ROLE_REGEX), "Todo must have legal todo role")
         .get();
       filters.add(eq(ROLE_KEY, role));
     }
@@ -108,5 +108,101 @@ public class TodoController implements Controller {
   }
 
 
+  private Bson constructSortingOrder(Context ctx) {
+    String sortBy = Objects.requireNonNull(ctx.queryParam("sortBy"), "name");
+    String sortOrder = Objects.requireNonNullElse(ctx.queryParam("sortorder"), "asc");
+    Bson sortingOrder = sortOrder.equals("desc") ? Sorts.descending(sortBy) : Sorts.ascending(sortBy);
+    return sortingOrder;
+  }
 
+  public void getTodosGroupedByCompany(Context ctx) {
+    String sortBy = Objects.requireNonNullElse(ctx.queryParam("sortBy"), "_id");
+    if (sortBy.equals("company")) {
+      sortBy = "_id";
+    }
+    String sortOrder = Objects.requireNonNullElse(ctx.queryParam("sortOrder"), "asc");
+    Bson sortingOrder = sortOrder.equals("desc") ? Sorts.descending(sortBy) : Sorts.ascending(sortBy);
+    ArrayList<TodoByCompany. matchingTodos = todoCollection
+      .aggregate(
+        List.of(
+          new Document("$project", new Document("_id", 1).append("name", 1).append("comapny", 1)),
+          new document("$group", new Document("_id", "$company")
+            .append("count", new Document("$sum", 1))
+            .append("todos". new Document("$push", new Document("_id", "$_id").append("name", "$name")))),
+          new Document("$sort", sortingOrder)
+        ),
+        TodoByCompany.class
+      )
+      .into(new ArrayList<>());
+      ctx.json(matchingTodos);
+      ctx.status(HttpStatus.OK);
+
+  }
+
+  public void addNewTodo(Context ctx) {
+    String body =ctx.body();
+    Todo newtTodo = ctx.bodyValidator(Todo.class)
+      .check(tod -> tod.name != null && tod.name.length() > 0,
+        "Todo must have a non-empty todo name; body was" + body)
+      .check(tod -> tod.email.matches(EMAIL_REGEX),
+        "Todo must have a legal email; body was " + body)
+      .check(tod -> tod.age > 0,
+        "Todo age must be greater than 0: body was " + body)
+      .check(tod -> tod.age < REASONABLE_AGE_LIMIT,
+        "Todo's age must be less than " + REASONABLE_AGE_LIMIT + "; body was " + body)
+      .check(tod-> tod.role.matches(ROLE_REGEX),
+        "Todo must have a legal todo role; body was " + body)
+      .check(tod -> tod.company != null && tod.company.length() > 0,
+        "Todo must have a non-empty company name; body was " + body)
+      .get();
+    newTodo.avatar = generateAvatar(newTodo.email);
+    todoCollection.insertOne(newTodo);
+    ctx.json(Map.of("id", newTodo._id));
+    ctx.status(HttpStatus.CREATED);
+
+  }
+
+  public void deleteTodo(Context ctx) {
+    String id = ctx.pathParam("id");
+    DeleteResult deleteResult = todoCollection.deleteOne(eq("_id", new ObjectId(id)));
+    if (deleteResult.getDeletedCount() != 1) {
+      ctx.status(HttpStatus.NOT_FOUND);
+      throw new NotFoundResponse(
+        "Was unable to delete ID "
+          + id
+          + "; perhaps illegal ID or an ID for an item not in the system?");
+      }
+      ctx.status(HttpStatus.OK);
+
+  }
+
+  String generateAvatar(String email) {
+    String avatar;
+    try {
+      avatar = "https://gravatar.com/avatar/" + md5(email) + "?d=identicon";
+    } catch (NoSuchAlgorithmException ignored) {
+      avatar = "https://gravatar.com/avatar/?d=mp";
+    }
+    return avatar;
+  }
+
+  public String md5 (String str) throws NoSuchAlgorithmException {
+    MessageDigest md = MessageDigest.getInstance("MD5");
+    byte[] hashInBytes = md.digest(str.toLowerCase().getBytes(StandardCharsets.UTF_8));
+    StringBuilder result = new StringBuilder();
+    for (byte b : hashInBytes) {
+      result.append(String.format("%02x", b));
+
+    }
+    return result.toString();
+  }
+
+  @Override
+  public void addRoutes(Javalin server) {
+    server.get(API_TODO_BY_ID, this::getTodo);
+    server.get(API_TODOS, this::getTodos);
+    server.get("/api/todosByCompany", this::getTodosGroupedByCompany);
+    server.post(API_TODOS, this::addNewTodo);
+    server.delete(API_TODO_BY_ID, this::deleteTodo);
+  }
 }
