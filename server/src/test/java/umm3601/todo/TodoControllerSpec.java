@@ -31,7 +31,6 @@ import com.mongodb.client.MongoDatabase;
 
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
-import umm3601.user.UserController;
 
 
 
@@ -76,8 +75,9 @@ static void teardown() {
     mongoClient.close();
 }
 
- @BeforeEach
+@BeforeEach
 void setupEach() {
+
     MockitoAnnotations.openMocks(this);
 
 
@@ -128,12 +128,14 @@ void setupEach() {
 //Test for todo 1 - return all todos
     @Test
     void canGetAllTodos() throws IOException {
+        // Mocking queryParamMap to simulate the absence of any query parameters
         when(ctx.queryParamMap()).thenReturn(Collections.emptyMap());
+        //call controller
         todoController.getTodos(ctx);
-
+        // capture the response and verify HTTP
         verify(ctx).json(TodoArrayListCaptor.capture()); //TodoArrayListCaptor needs definition
         verify(ctx).status(HttpStatus.OK);
-
+        //get returned list
         assertEquals(
          db.getCollection("todos").countDocuments(),
           TodoArrayListCaptor.getValue().size()
@@ -153,17 +155,17 @@ void setupEach() {
     }
 //Todo 3 - Limit Number of Todos displayed
     @Test
+
     void canGetLimitedByNumberOfTodos() throws IOException {
+    //Mock the "limit" query parameter to return 2
 
-      //query parameter
-      when(ctx.queryParamAsClass("limit", Integer.class)).thenReturn(2);
-
+      when(ctx.queryParam("limit")).thenReturn("2");
 
 
       // call controller
       todoController.getTodos(ctx);
 
-      //Capture
+      // capture the response and verify HTTP
       verify(ctx).json(TodoArrayListCaptor.capture());
       verify(ctx).status(HttpStatus.OK);
 
@@ -179,8 +181,10 @@ void setupEach() {
 
 //Todo 4 - Filter Todo by status
     @Test
+
     void canFilterByStatus() throws IOException {
-      when(ctx.queryParam("status")).thenReturn("complete");
+      // Mock the "status" query parameter as "complete"
+      when(ctx.queryParam("status")).thenReturn("true");
 
       //call controller
       todoController.getTodos(ctx);
@@ -198,7 +202,9 @@ void setupEach() {
 
 //Todo 5 - Search Todos By String
     @Test
+
     void canSearchTodosByString() throws IOException {
+     // Mock the "contains" query parameter as "banana"
       when(ctx.queryParam("contains")).thenReturn("banana");
 
       todoController.getTodos(ctx);
@@ -208,7 +214,7 @@ void setupEach() {
 
       List<Todo> todosReturned = TodoArrayListCaptor.getValue();
 
-      assertTrue(todosReturned.stream().allMatch(todo -> todo.body.toLowerCase().contains("banana")));
+      assertTrue(todosReturned.stream().allMatch(todo -> todo.name.toLowerCase().contains("banana")));
     }
 
 

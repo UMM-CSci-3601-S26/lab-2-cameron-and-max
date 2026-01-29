@@ -33,11 +33,11 @@ public class TodoSpec {
   }
 
   @Test
-  void todosWithEqualIDAreNotEqual() {
+  void todosWithDifferentIDAreNotEqual() {
     todo1._id = FAKE_ID_STRING_1;
     todo2._id = FAKE_ID_STRING_2;
 
-    assertTrue(todo1.equals(todo2));
+    assertFalse(todo1.equals(todo2));
 
   }
 

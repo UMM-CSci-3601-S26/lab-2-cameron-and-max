@@ -111,7 +111,7 @@ public class TodoController implements Controller {
 
     if (ctx.queryParamMap().containsKey("status")) {
       String status = ctx.queryParam("status");
-      if(status != null){
+      if (status != null) {
         boolean completed = status.equalsIgnoreCase("complete");
         filters.add(eq("completed", completed));
       }
@@ -174,7 +174,7 @@ public class TodoController implements Controller {
   }
 
   public void addNewTodo(Context ctx) {
-    String body =ctx.body();
+    String body = ctx.body();
     Todo newTodo = ctx.bodyValidator(Todo.class)
       .check(tod -> tod.name != null && tod.name.length() > 0,
         "Todo must have a non-empty todo name; body was" + body)
@@ -184,7 +184,7 @@ public class TodoController implements Controller {
         "Todo age must be greater than 0: body was " + body)
       .check(tod -> tod.age < REASONABLE_AGE_LIMIT,
         "Todo's age must be less than " + REASONABLE_AGE_LIMIT + "; body was " + body)
-      .check(tod-> tod.role != null && tod.role.matches(ROLE_REGEX),
+      .check(tod -> tod.role != null && tod.role.matches(ROLE_REGEX),
         "Todo must have a legal todo role; body was " + body)
       .check(tod -> tod.company != null && tod.company.length() > 0,
         "Todo must have a non-empty company name; body was " + body)
@@ -220,7 +220,7 @@ public class TodoController implements Controller {
     return avatar;
   }
 
-  public String md5 (String str) throws NoSuchAlgorithmException {
+  public String md5(String str) throws NoSuchAlgorithmException {
     MessageDigest md = MessageDigest.getInstance("MD5");
     byte[] hashInBytes = md.digest(str.toLowerCase().getBytes(StandardCharsets.UTF_8));
     StringBuilder result = new StringBuilder();
