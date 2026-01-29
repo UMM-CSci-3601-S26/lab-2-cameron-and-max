@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import com.mongodb.client.model.Filters;
+
 
 import org.bson.Document;
 import org.bson.UuidRepresentation;
@@ -68,18 +70,30 @@ public class TodoController implements Controller {
   }
 
   public void getTodos(Context ctx) {
+    String statusParam = ctx.queryParam("status");
+
     Bson combinedFilter = constructFilter(ctx);
-    Bson sortingOrder = constructSortingOrder(ctx);
-    int limit = ctx.queryParamAsClass("limit", Integer.class)
-                  .getOrDefault(0);
+    Bson sortingOrder = Sorts.ascending("name");
+    if ("true".equals(statusParam)){
+      combinedFilter = combineFilters(combinedFilter, Filters.eq("completed", true));
+
+
+    }
+    String limitParam = ctx.queryParam("limit");
+    int limit = (limitParam != null) ? Integer.parseInt(limitParam) : 0;
     ArrayList<Todo> matchingTodos = todoCollection
       .find(combinedFilter)
       .sort(sortingOrder)
       .limit(limit > 0 ? limit : 0)
       .into(new ArrayList<>());
-    ctx.json(matchingTodos);
+
+      ctx.json(matchingTodos);
     ctx.status(HttpStatus.OK);
 
+  }
+
+  private Bson combineFilters(Bson originalFilter, Bson newFilter) {
+    return Filters.and(originalFilter, newFilter);
   }
 
 

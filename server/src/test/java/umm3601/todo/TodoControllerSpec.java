@@ -49,7 +49,7 @@ private Context ctx;
 private TodoController todoController;
 
 @Captor
-private ArgumentCaptor<ArrayList<Todo>> TodoArrayListCaptor;
+private ArgumentCaptor<List<Todo>> TodoArrayListCaptor;
 
 @Captor
 private ArgumentCaptor<Todo> TodoCaptor;
@@ -135,10 +135,11 @@ void setupEach() {
         // capture the response and verify HTTP
         verify(ctx).json(TodoArrayListCaptor.capture()); //TodoArrayListCaptor needs definition
         verify(ctx).status(HttpStatus.OK);
+        List<Todo> returnedTodos = TodoArrayListCaptor.getValue();
         //get returned list
         assertEquals(
          db.getCollection("todos").countDocuments(),
-          TodoArrayListCaptor.getValue().size()
+          returnedTodos.size()
         );
     }
 //Test for todo 2 - Return Todo with an ID
@@ -155,7 +156,6 @@ void setupEach() {
     }
 //Todo 3 - Limit Number of Todos displayed
     @Test
-
     void canGetLimitedByNumberOfTodos() throws IOException {
     //Mock the "limit" query parameter to return 2
 
@@ -174,14 +174,16 @@ void setupEach() {
       //2 todos are returned
       assertEquals(2, todosReturned.size());
 
-      assertEquals("Todo 1", todosReturned.get(0).name);
-      assertEquals("Todo 2", todosReturned.get(1).name);
+      assertEquals("Special Todo", todosReturned.get(0).name);
+      assertEquals("Test Todo 1", todosReturned.get(1).name);
+
+
+
     }
 
 
 //Todo 4 - Filter Todo by status
     @Test
-
     void canFilterByStatus() throws IOException {
       // Mock the "status" query parameter as "complete"
       when(ctx.queryParam("status")).thenReturn("true");
@@ -194,9 +196,8 @@ void setupEach() {
 
       List<Todo> todosReturned = TodoArrayListCaptor.getValue();
 
-      assertTrue(
-        todosReturned.stream().allMatch(Todo -> Todo.isCompleted())
-      );
+      assertTrue(todosReturned.stream().allMatch(Todo -> Todo.isCompleted()));
+
 
     }
 
@@ -204,8 +205,8 @@ void setupEach() {
     @Test
 
     void canSearchTodosByString() throws IOException {
-     // Mock the "contains" query parameter as "banana"
-      when(ctx.queryParam("contains")).thenReturn("banana");
+     // Mock the "contains" query parameter as "todo"
+      when(ctx.queryParam("contains")).thenReturn("todo");
 
       todoController.getTodos(ctx);
 
@@ -214,7 +215,7 @@ void setupEach() {
 
       List<Todo> todosReturned = TodoArrayListCaptor.getValue();
 
-      assertTrue(todosReturned.stream().allMatch(todo -> todo.name.toLowerCase().contains("banana")));
+      assertTrue(todosReturned.stream().allMatch(todo -> todo.name.toLowerCase().contains("todo")));
     }
 
 
