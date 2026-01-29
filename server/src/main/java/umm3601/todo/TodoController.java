@@ -82,6 +82,10 @@ public class TodoController implements Controller {
 
   }
 
+
+
+
+
   private Bson constructFilter(Context ctx) {
     List<Bson> filters = new ArrayList<>();
 
@@ -103,6 +107,21 @@ public class TodoController implements Controller {
         .check(it -> it.matches(ROLE_REGEX), "Todo must have legal todo role")
         .get();
       filters.add(eq(ROLE_KEY, role));
+    }
+
+    if (ctx.queryParamMap().containsKey("status")) {
+      String status = ctx.queryParam("status");
+      if(status != null){
+        boolean completed = status.equalsIgnoreCase("complete");
+        filters.add(eq("completed", completed));
+      }
+    }
+
+    if (ctx.queryParamMap().containsKey("contains")) {
+      String contains = ctx.queryParam("contains");
+      if (contains != null && !contains.isEmpty()) {
+        filters.add(regex("body", Pattern.compile(Pattern.quote(contains), Pattern.CASE_INSENSITIVE)));
+      }
     }
     Bson combinedFilter = filters.isEmpty() ? new Document() : and(filters);
 

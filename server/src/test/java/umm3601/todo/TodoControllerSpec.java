@@ -170,14 +170,38 @@ void setupEach() {
     }
 
 
-//Todo 4 -
+//Todo 4 - Filter Todo by status
     @Test
-    void canFilterbyStatus(){
+    void canFilterByStatus() throws IOException {
+      when(ctx.queryParam("Status")).thenReturn("complete");
+
+      //call controller
+      todoController.getTodos(ctx);
+
+      verify(ctx).json(TodoArrayListCaptor.caputre());
+      verify(ctx).status(HttpStatus.OK);
+
+      List<Todo> todosReturned = TodoArrayListCaptor.getValue();
+
+      assertTrue(
+        todosReturned.stream().allMatch(todo -> todo.isCompleted));
 
     }
 
-//Todo 5 -
+//Todo 5 - Search Todos By String
     @Test
+    void canSearchTodosByString() throws IOException {
+      when(ctx.queryParam("contains")).thenReturn("banana");
+
+      todoController.getTodos(ctx);
+
+      verify(ctx).json(TodoArrayListCaptor.capture());
+      verify(ctx).status(HttpStatus.Ok);
+
+      List<Todo> todosReturned = TodoArrayListCaptor.getValue();
+
+      assertTrue(todosReturned.stream().allMatch(todo -> todo.body.toLowerCase().contains("banana")));
+    }
 
 
 
