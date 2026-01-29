@@ -141,6 +141,13 @@ void setupEach() {
          db.getCollection("todos").countDocuments(),
           returnedTodos.size()
         );
+
+        //when (ctx.queryParam("limit")).thenReturn("2");
+        //todoController.getTodos(ctx);
+        //verify(ctx).json(TodoArrayListCaptor.capture());
+        //List<Todo> todosWithLimit = TodoArrayListCaptor.getValue();
+        //assertEquals(2, todosWithLimit.size());
+
     }
 //Test for todo 2 - Return Todo with an ID
     @Test
@@ -176,6 +183,16 @@ void setupEach() {
 
       assertEquals("Special Todo", todosReturned.get(0).name);
       assertEquals("Test Todo 1", todosReturned.get(1).name);
+
+      //when(ctx.queryParam("limit")).thenReturn("-1");
+      //todoController.getTodos(ctx);
+      //verify(ctx).json(TodoArrayListCaptor.capture());
+      //List<Todo> allTodos = TodoArrayListCaptor.getValue();
+      //assertEquals(db.getCollection("todos").countDocuments(), allTodos.size());
+
+      //when(ctx.queryParam("limit")).thenReturn("invalid");
+      //todoController.getTodos(ctx);
+      //verify(ctx).status(HttpStatus.BAD_REQUEST);
 
 
 
