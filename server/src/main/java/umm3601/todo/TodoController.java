@@ -55,7 +55,7 @@ public class TodoController implements Controller {
     Todo todo;
 
      try {
-      todo = todoCollection.find(eq("id", new ObjectId(id))).first();
+      todo = todoCollection.find(eq("_id", new ObjectId(id))).first();
      } catch (IllegalArgumentException e) {
       throw new BadRequestResponse("The requested todo id wasn't a legal Mongo Object ID.");
      }
@@ -70,9 +70,12 @@ public class TodoController implements Controller {
   public void getTodos(Context ctx) {
     Bson combinedFilter = constructFilter(ctx);
     Bson sortingOrder = constructSortingOrder(ctx);
-    ArrayList<Todo> matchingUSers = todoCollection
+    int limit = ctx.queryParamAsClass("limit", Integer.class)
+                  .getOrDefault(0);
+    ArrayList<Todo> matchingTodos = todoCollection
       .find(combinedFilter)
       .sort(sortingOrder)
+      .limit(limit > 0 ? limit : 0)
       .into(new ArrayList<>());
     ctx.json(matchingTodos);
     ctx.status(HttpStatus.OK);
@@ -86,7 +89,7 @@ public class TodoController implements Controller {
       int targetAge = ctx.queryParamAsClass(AGE_KEY, Integer.class)
         .check(it -> it > 0, "Todo's age must be greater than zero; you provided " + ctx.queryParam(AGE_KEY))
         .check(it -> it < REASONABLE_AGE_LIMIT,
-          "Todo's age muust be less than " + REASONABLE_AGE_LIMIT + "; you provided " + ctx.queryParam(AGE_KEY))
+          "Todo's age must be less than " + REASONABLE_AGE_LIMIT + "; you provided " + ctx.queryParam(AGE_KEY))
         .get();
         filters.add(eq(AGE_KEY, targetAge));
     }
@@ -109,7 +112,7 @@ public class TodoController implements Controller {
 
 
   private Bson constructSortingOrder(Context ctx) {
-    String sortBy = Objects.requireNonNull(ctx.queryParam("sortBy"), "name");
+    String sortBy = Objects.requireNonNullElse(ctx.queryParam("sortBy"), "name");
     String sortOrder = Objects.requireNonNullElse(ctx.queryParam("sortorder"), "asc");
     Bson sortingOrder = sortOrder.equals("desc") ? Sorts.descending(sortBy) : Sorts.ascending(sortBy);
     return sortingOrder;
@@ -122,13 +125,25 @@ public class TodoController implements Controller {
     }
     String sortOrder = Objects.requireNonNullElse(ctx.queryParam("sortOrder"), "asc");
     Bson sortingOrder = sortOrder.equals("desc") ? Sorts.descending(sortBy) : Sorts.ascending(sortBy);
-    ArrayList<TodoByCompany. matchingTodos = todoCollection
+    ArrayList<TodoByCompany> matchingTodos = todoCollection
       .aggregate(
         List.of(
-          new Document("$project", new Document("_id", 1).append("name", 1).append("comapny", 1)),
-          new document("$group", new Document("_id", "$company")
+          new Document("$project",
+            new Document("_id", 1)
+            .append("name", 1)
+            .append("company", 1)
+          ),
+          new Document("$group",
+           new Document("_id", "$company")
             .append("count", new Document("$sum", 1))
-            .append("todos". new Document("$push", new Document("_id", "$_id").append("name", "$name")))),
+            .append(
+              "todos",
+               new Document("$push",
+                new Document("_id", "$_id")
+                .append("name", "$name")
+              )
+            )
+          ),
           new Document("$sort", sortingOrder)
         ),
         TodoByCompany.class
@@ -141,16 +156,16 @@ public class TodoController implements Controller {
 
   public void addNewTodo(Context ctx) {
     String body =ctx.body();
-    Todo newtTodo = ctx.bodyValidator(Todo.class)
+    Todo newTodo = ctx.bodyValidator(Todo.class)
       .check(tod -> tod.name != null && tod.name.length() > 0,
         "Todo must have a non-empty todo name; body was" + body)
-      .check(tod -> tod.email.matches(EMAIL_REGEX),
+      .check(tod -> tod.email != null && tod.email.matches(EMAIL_REGEX),
         "Todo must have a legal email; body was " + body)
       .check(tod -> tod.age > 0,
         "Todo age must be greater than 0: body was " + body)
       .check(tod -> tod.age < REASONABLE_AGE_LIMIT,
         "Todo's age must be less than " + REASONABLE_AGE_LIMIT + "; body was " + body)
-      .check(tod-> tod.role.matches(ROLE_REGEX),
+      .check(tod-> tod.role != null && tod.role.matches(ROLE_REGEX),
         "Todo must have a legal todo role; body was " + body)
       .check(tod -> tod.company != null && tod.company.length() > 0,
         "Todo must have a non-empty company name; body was " + body)

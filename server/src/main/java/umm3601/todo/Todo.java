@@ -21,15 +21,15 @@ public class Todo {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof Todo)) {
-      return false;
-    }
+    if (this == obj) return true;
+    if (!(obj instanceof Todo)) return false;
     Todo other = (Todo) obj;
-    return _id.equals(other._id);
+    return _id != null && _id.equals(other._id);
+
   }
   @Override
   public int hashCode() {
-    return _id.hashCode();
+    return _id == null ? 0 : _id.hashCode();
   }
   @Override
   public String toString() {
