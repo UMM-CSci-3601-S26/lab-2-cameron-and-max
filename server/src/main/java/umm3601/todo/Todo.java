@@ -18,6 +18,11 @@ public class Todo {
   public String email;
   public String avatar;
   public String role;
+  public boolean completed;
+
+  public boolean isCompleted() {
+    return completed;
+  }
 
   @Override
   public boolean equals(Object obj) {

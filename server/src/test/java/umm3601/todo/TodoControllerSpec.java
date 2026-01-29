@@ -15,6 +15,7 @@ import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -90,14 +91,18 @@ void setupEach() {
         .append("company", "ACME")
         .append("email", "one@test.com")
         .append("role", "admin")
-        .append("avatar", "https://gravatar.com/avatar/example1?d=identicon"));
+        .append("avatar", "https://gravatar.com/avatar/example1?d=identicon")
+        .append("completed", false)
+    );
     testTodos.add(new Document()
         .append("name", "Test Todo 2")
         .append("age", 30)
         .append("company", "Globex")
         .append("email", "two@test.com")
         .append("role", "editor")
-        .append("avatar", "https://gravatar.com/avatar/example2?d=identicon"));
+        .append("avatar", "https://gravatar.com/avatar/example2?d=identicon")
+        .append("completed", true)
+      );
 
 
     todoId = new ObjectId();
@@ -108,7 +113,8 @@ void setupEach() {
         .append("company", "Initech")
         .append("email", "special@test.com")
         .append("role", "viewer")
-        .append("avatar", "https://gravatar.com/avatar/example3?d=identicon");
+        .append("avatar", "https://gravatar.com/avatar/example3?d=identicon")
+        .append("completed", true);
 
     todoDocuments.insertMany(testTodos);
     todoDocuments.insertOne(specialTodo);
@@ -148,9 +154,10 @@ void setupEach() {
 //Todo 3 - Limit Number of Todos displayed
     @Test
     void canGetLimitedByNumberOfTodos() throws IOException {
+
       //query parameter
-      when(ctx.queryParamMap()).thenReturn(Collections.singletonMap("limit", List.of("2")));
-      when(ctx.queryParam("limit")).thenReturn("2");
+      when(ctx.queryParamAsClass("limit", Integer.class)).thenReturn(2);
+
 
 
       // call controller
@@ -173,18 +180,19 @@ void setupEach() {
 //Todo 4 - Filter Todo by status
     @Test
     void canFilterByStatus() throws IOException {
-      when(ctx.queryParam("Status")).thenReturn("complete");
+      when(ctx.queryParam("status")).thenReturn("complete");
 
       //call controller
       todoController.getTodos(ctx);
 
-      verify(ctx).json(TodoArrayListCaptor.caputre());
+      verify(ctx).json(TodoArrayListCaptor.capture());
       verify(ctx).status(HttpStatus.OK);
 
       List<Todo> todosReturned = TodoArrayListCaptor.getValue();
 
       assertTrue(
-        todosReturned.stream().allMatch(todo -> todo.isCompleted));
+        todosReturned.stream().allMatch(Todo -> Todo.isCompleted())
+      );
 
     }
 
@@ -196,7 +204,7 @@ void setupEach() {
       todoController.getTodos(ctx);
 
       verify(ctx).json(TodoArrayListCaptor.capture());
-      verify(ctx).status(HttpStatus.Ok);
+      verify(ctx).status(HttpStatus.OK);
 
       List<Todo> todosReturned = TodoArrayListCaptor.getValue();
 
