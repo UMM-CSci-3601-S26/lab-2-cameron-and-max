@@ -113,4 +113,6 @@
       "zstd"
     ],
     "angular.enable-experimental-ivy-prompt": false,
+    "liveshare.allowGuestTaskControl": true,
+    "java.debug.settings.onBuildFailureProceed": true,
 }
