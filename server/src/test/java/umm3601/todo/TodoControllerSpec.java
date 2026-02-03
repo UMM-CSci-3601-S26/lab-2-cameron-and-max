@@ -1,27 +1,24 @@
 package umm3601.todo;
 
-import umm3601.todo.Todo;
+
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
+
+
+
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static com.mongodb.client.model.Filters.eq;
 
 
 
-import static org.junit.jupiter.api.Assertions.fail;
+
+
 
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,7 +29,7 @@ import java.util.stream.Collectors;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.eclipse.jetty.util.IO;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,10 +38,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+
 import org.mockito.MockitoAnnotations;
-import org.mongojack.JacksonMongoCollection;
-import org.mongojack.internal.util.FindIterableDecorator;
+
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
@@ -52,20 +48,20 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.DeleteResult;
+
 
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.validation.BodyValidator;
+
 import io.javalin.validation.Validation;
 import io.javalin.validation.Validator;
-import umm3601.user.UserController;
 
 
 
 
+@SuppressWarnings({ "MagicNumber" })
 public class TodoControllerSpec {
 
   private static MongoClient mongoClient;
@@ -323,154 +319,7 @@ void setupEach() {
       }
     }
 
-    @Test
-  void deleteTodoWithInvalidId() throws IOException {
-    when(ctx.pathParam("id")).thenReturn("invalidId");
 
-    BadRequestResponse e = assertThrows(
-        BadRequestResponse.class,
-        () -> todoController.deleteTodo(ctx)
-    );
-
-
-    assertTrue(e.getMessage().contains("ID wasn't a legal Mongo Object ID"));
-}
-
-
-
-
-    @Test
-    void addNewTodoWithInvalidEmail() throws IOException {
-      String badTodoJson = """
-        {
-          "name" : "Test",
-          "email": "not-an-email",
-          "age": 25,
-          "role": "admin",
-          "company": "ACME"
-        }
-      """;
-      when(ctx.body()).thenReturn(badTodoJson);
-      var fakeValidator = mock(io.javalin.validation.BodyValidator.class);
-      when(ctx.bodyValidator(Todo.class)).thenReturn(fakeValidator);
-      when(fakeValidator.check(any(), anyString())).thenReturn(fakeValidator);
-      when(fakeValidator.get()).thenThrow(new BadRequestResponse("Todo must have a legal email"));
-
-
-      BadRequestResponse e = assertThrows(
-          BadRequestResponse.class,
-          () -> todoController.addNewTodo(ctx)
-      );
-        assertTrue(e.getMessage().contains("legal email"));
-    }
-
-
-    @Test
-    void addNewTodoWithInvalidAge() throws IOException {
-      String badTodoJson = """
-        {
-          "name" : "Test",
-          "email": "test@test.com",
-          "age": 0,
-          "role": "admin",
-          "company": "ACME"
-        }
-      """;
-      when(ctx.body()).thenReturn(badTodoJson);
-
-      var fakeValidator = mock(io.javalin.validation.BodyValidator.class);
-      when(ctx.bodyValidator(Todo.class)).thenReturn(fakeValidator);
-      when(fakeValidator.check(any(), anyString())).thenReturn(fakeValidator);
-      when(fakeValidator.get()).thenThrow(new BadRequestResponse("Todo age must be greater than 0"));
-
-
-      BadRequestResponse e = assertThrows(
-          BadRequestResponse.class,
-          () -> todoController.addNewTodo(ctx)
-      );
-        assertTrue(e.getMessage().contains("greater than 0"));
-
-    }
-
-    @Test
-    void addNewTodoWithEmptyName() throws IOException {
-      String badTodoJson = """
-        {
-          "name" : "",
-          "email": "test@test.com",
-          "age": 25,
-          "role": "admin",
-          "company": "ACME"
-        }
-      """;
-
-
-      when(ctx.body()).thenReturn(badTodoJson);
-      var fakeValidator = mock(io.javalin.validation.BodyValidator.class);
-      when(ctx.bodyValidator(Todo.class)).thenReturn(fakeValidator);
-      when(fakeValidator.check(any(), anyString())).thenReturn(fakeValidator);
-      when(fakeValidator.get()).thenThrow(new BadRequestResponse("non-empty todo name"));
-
-
-      BadRequestResponse e = assertThrows(
-          BadRequestResponse.class,
-          () -> todoController.addNewTodo(ctx)
-      );
-        assertTrue(e.getMessage().contains("non-empty todo name"));
-
-    }
-
-    @Test
-    void addNewTodoWithInvalidRole() throws IOException {
-      String badTodoJson = """
-        {
-          "name" : "Test",
-          "email": "test@test.com",
-          "age": 25,
-          "role": "InvalidRole",
-          "company": "ACME"
-        }
-      """;
-      when(ctx.body()).thenReturn(badTodoJson);
-      var fakeValidator = mock(io.javalin.validation.BodyValidator.class);
-      when(ctx.bodyValidator(Todo.class)).thenReturn(fakeValidator);
-      when(fakeValidator.check(any(), anyString())).thenReturn(fakeValidator);
-      when(fakeValidator.get()).thenThrow(new BadRequestResponse("legal todo role"));
-
-
-      BadRequestResponse e = assertThrows(
-          BadRequestResponse.class,
-          () -> todoController.addNewTodo(ctx)
-      );
-        assertTrue(e.getMessage().contains("legal todo role"));
-
-    }
-
-    @Test
-    void addNewTodoWithEmptyCompany() throws IOException {
-      String badTodoJson = """
-        {
-          "name" : "Test",
-          "email": "test@test.com",
-          "age": 25,
-          "role": "admin",
-          "company": "ACME"
-        }
-      """;
-      when(ctx.body()).thenReturn(badTodoJson);
-      var fakeValidator = mock(io.javalin.validation.BodyValidator.class);
-      when(ctx.bodyValidator(Todo.class)).thenReturn(fakeValidator);
-      when(fakeValidator.check(any(), anyString())).thenReturn(fakeValidator);
-      when(fakeValidator.get()).thenThrow(new BadRequestResponse("non-empty company name"));
-
-
-      BadRequestResponse e = assertThrows(
-          BadRequestResponse.class,
-          () -> todoController.addNewTodo(ctx)
-      );
-        assertTrue(e.getMessage().contains("non-empty company name"));
-
-    }
 
     @Test
     void getTodosWithNoQueryParams() throws IOException {
@@ -489,33 +338,7 @@ void setupEach() {
 
     }
 
-     @Test
-    void testGenerateAvatar() throws NoSuchAlgorithmException {
-    // Arrange
-      String email = "test@example.com";
-      TodoController controller = Mockito.spy(todoController);
-      when(controller.md5(email)).thenReturn("md5hash");
 
-    // Act
-      String avatar = controller.generateAvatar(email);
-
-    // Assert
-     assertEquals("https://gravatar.com/avatar/md5hash?d=identicon", avatar);
-    }
-
-    @Test
-  void testGenerateAvatarWithException() throws NoSuchAlgorithmException {
-
-    String email = "test@example.com";
-    TodoController controller = Mockito.spy(todoController);
-    when(controller.md5(email)).thenThrow(NoSuchAlgorithmException.class);
-
-
-    String avatar = controller.generateAvatar(email);
-
-
-    assertEquals("https://gravatar.com/avatar/?d=mp", avatar);
-  }
 
    @Test
   void getTodosByCompanyAndAge() throws IOException {
@@ -556,41 +379,6 @@ void setupEach() {
     verify(ctx).json(todoArrayListCaptor.capture());
     assertTrue(todoArrayListCaptor.getValue().isEmpty());
   }
-
-  @Test
-  void deleteExistingTodo()  throws IOException {
-    String idStr = todoId.toHexString();
-    when(ctx.pathParam("id")).thenReturn(idStr);
-
-    todoController.deleteTodo(ctx);
-
-    verify(ctx).status(HttpStatus.NO_CONTENT);
-    assertEquals(0, db.getCollection("todos").countDocuments(eq("_id", todoId)));
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -4,12 +4,10 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.regex;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+
 import java.util.regex.Pattern;
 
 import org.bson.Document;
@@ -20,7 +18,7 @@ import org.mongojack.JacksonMongoCollection;
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Sorts;
-import com.mongodb.client.result.DeleteResult;
+
 
 import io.javalin.Javalin;
 import io.javalin.http.BadRequestResponse;
@@ -55,7 +53,9 @@ public class TodoController implements Controller {
     } catch (IllegalArgumentException e) {
       throw new BadRequestResponse("The requested todo id wasn't a legal Mongo Object ID.");
     }
-    if (todo == null) throw new NotFoundResponse("The requested todo was not found");
+    if (todo == null) {
+      throw new NotFoundResponse("The requested todo was not found");
+    }
 
     ctx.json(todo);
     ctx.status(HttpStatus.OK);
@@ -103,7 +103,9 @@ public class TodoController implements Controller {
 
     if (ctx.queryParamMap().containsKey("status")) {
       String status = ctx.queryParam("status");
-      if (status != null) filters.add(eq("completed", status.equalsIgnoreCase("complete")));
+      if (status != null) {
+        filters.add(eq("completed", status.equalsIgnoreCase("complete")));
+      }
     }
 
     if (ctx.queryParamMap().containsKey("contains")) {
@@ -116,60 +118,14 @@ public class TodoController implements Controller {
     return filters.isEmpty() ? new Document() : and(filters);
   }
 
-  public void addNewTodo(Context ctx) {
-    String body = ctx.body();
-    Todo todo = ctx.bodyValidator(Todo.class)
-      .check(t -> t.name != null && !t.name.isEmpty(), "Non-empty name required")
-      .check(t -> t.email != null && t.email.matches(EMAIL_REGEX), "Valid email required")
-      .check(t -> t.age > 0 && t.age < REASONABLE_AGE_LIMIT, "Valid age required")
-      .check(t -> t.role != null && t.role.matches(ROLE_REGEX), "Valid role required")
-      .check(t -> t.company != null && !t.company.isEmpty(), "Non-empty company required")
-      .get();
 
-    todo.avatar = generateAvatar(todo.email);
-    todoCollection.insertOne(todo);
 
-    ctx.json(Map.of("id", todo._id));
-    ctx.status(HttpStatus.CREATED);
-  }
-
-  public void deleteTodo(Context ctx) {
-    ObjectId id;
-    try {
-      id = new ObjectId(ctx.pathParam("id"));
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestResponse("ID wasn't a legal Mongo Object ID");
-    }
-
-    DeleteResult result = todoCollection.deleteOne(eq("_id", id));
-    if (result.getDeletedCount() == 0) throw new NotFoundResponse("Todo not found");
-
-    ctx.status(HttpStatus.NO_CONTENT);
-  }
-
-  String generateAvatar(String email) {
-    try {
-      return "https://gravatar.com/avatar/" + md5(email) + "?d=identicon";
-    } catch (NoSuchAlgorithmException | NullPointerException e) {
-      return "https://gravatar.com/avatar/?d=mp";
-    }
-  }
-
-  public String md5(String str) throws NoSuchAlgorithmException {
-    if (str == null) throw new NullPointerException();
-    MessageDigest md = MessageDigest.getInstance("MD5");
-    byte[] hash = md.digest(str.toLowerCase().getBytes(StandardCharsets.UTF_8));
-    StringBuilder sb = new StringBuilder();
-    for (byte b : hash) sb.append(String.format("%02x", b));
-    return sb.toString();
-  }
 
   @Override
   public void addRoutes(Javalin server) {
     server.get(API_TODO_BY_ID, this::getTodo);
     server.get(API_TODOS, this::getTodos);
-    server.post(API_TODOS, this::addNewTodo);
-    server.delete(API_TODO_BY_ID, this::deleteTodo);
+
   }
 
   JacksonMongoCollection<Todo> getTodoCollection() {
