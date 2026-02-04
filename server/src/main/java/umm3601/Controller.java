@@ -32,7 +32,7 @@ public interface Controller {
    * controller's datatype, by calling
    * `server.get(...)`, `server.post(...)`, etc.
    *
-   * @param server The Javalin server to add routes to
+   * @param server The Javalin server to addhttps://prod.liveshare.vsengsaas.visualstudio.com/join?EA152E9BEA72E4068964AEFFC1E701067012 routes to
    */
   void addRoutes(Javalin server);
 }

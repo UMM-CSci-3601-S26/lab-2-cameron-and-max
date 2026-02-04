@@ -12,16 +12,16 @@ public class Todo {
   @SuppressWarnings({"MemberName"})
   public String _id;
 
-  public String name;
-  public int age;
-  public String company;
-  public String email;
-  public String avatar;
-  public String role;
-  public boolean completed;
+
+
+
+  public String owner;
+  public String body;
+  public String category;
+  public Boolean status;
 
   public boolean isCompleted() {
-    return completed;
+    return status;
   }
 
   @Override
@@ -42,7 +42,7 @@ public class Todo {
   }
   @Override
   public String toString() {
-    return name;
+    return _id;
   }
 }
 
