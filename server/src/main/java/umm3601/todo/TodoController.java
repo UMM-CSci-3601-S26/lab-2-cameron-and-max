@@ -31,12 +31,13 @@ public class TodoController implements Controller {
 
   private static final String API_TODOS = "/api/todos";
   private static final String API_TODO_BY_ID = "/api/todos/{id}";
-  static final String AGE_KEY = "age";
-  static final String COMPANY_KEY = "company";
-  static final String ROLE_KEY = "role";
+  static final String STATUS_KEY = "status";
+  static final String OWNER_KEY = "owner";
+  static final String BODY_KEY = "body";
+  static final String CATEGORY_KEY = "category";
+
   private static final int REASONABLE_AGE_LIMIT = 150;
-  private static final String ROLE_REGEX = "^(admin|editor|viewer)$";
-  public static final String EMAIL_REGEX = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
+  private static final String CATEGORY_REGEX = "^(homework|software design|video games|groceries)$";
 
   private final JacksonMongoCollection<Todo> todoCollection;
 
@@ -63,7 +64,7 @@ public class TodoController implements Controller {
 
   public void getTodos(Context ctx) {
     Bson filter = constructFilter(ctx);
-    Bson sort = Sorts.ascending("name");
+    Bson sort = Sorts.ascending("_id");
 
     String limitParam = ctx.queryParam("limit");
     int limit = (limitParam != null) ? Integer.parseInt(limitParam) : 0;
@@ -81,24 +82,17 @@ public class TodoController implements Controller {
   private Bson constructFilter(Context ctx) {
     List<Bson> filters = new ArrayList<>();
 
-    if (ctx.queryParamMap().containsKey(AGE_KEY)) {
-      int age = ctx.queryParamAsClass(AGE_KEY, Integer.class)
-        .check(a -> a > 0, "Todo's age must be > 0")
-        .check(a -> a < REASONABLE_AGE_LIMIT, "Todo's age must be < " + REASONABLE_AGE_LIMIT)
-        .get();
-      filters.add(eq(AGE_KEY, age));
+
+    if (ctx.queryParamMap().containsKey(OWNER_KEY)) {
+      String owner = ctx.queryParam(OWNER_KEY);
+      filters.add(regex(OWNER_KEY, Pattern.compile(Pattern.quote(owner), Pattern.CASE_INSENSITIVE)));
     }
 
-    if (ctx.queryParamMap().containsKey(COMPANY_KEY)) {
-      String company = ctx.queryParam(COMPANY_KEY);
-      filters.add(regex(COMPANY_KEY, Pattern.compile(Pattern.quote(company), Pattern.CASE_INSENSITIVE)));
-    }
-
-    if (ctx.queryParamMap().containsKey(ROLE_KEY)) {
-      String role = ctx.queryParamAsClass(ROLE_KEY, String.class)
-        .check(r -> r.matches(ROLE_REGEX), "Invalid todo role")
+    if (ctx.queryParamMap().containsKey(CATEGORY_KEY)) {
+      String category = ctx.queryParamAsClass(CATEGORY_KEY, String.class)
+        .check(r -> r.matches(CATEGORY_REGEX), "Invalid todo category")
         .get();
-      filters.add(eq(ROLE_KEY, role));
+      filters.add(eq(CATEGORY_KEY, category));
     }
 
     if (ctx.queryParamMap().containsKey("status")) {
